@@ -1,125 +1,15 @@
 // This script demonstrates some simple things one can do with leaflet.js
 
 
-var map = L.map('map').setView([40.65,-73.93], 12);
+var map = L.map('map').setView([40.841156, -73.883678], 12);
 
 // set a tile layer to be CartoDB tiles 
-var CartoDBTiles = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',{
+var CartoDBTiles = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',{
   attribution: 'Map Data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> Contributors, Map Tiles &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
 });
 
 // add these tiles to our map
 map.addLayer(CartoDBTiles);
-
-// set data layer as global variable so we can use it in the layer control below
-var acsGeoJSON;
-
-// use jQuery get geoJSON to grab geoJson layer, parse it, then plot it on the map using the plotDataset function
-$.getJSON( "data/acs_data_joined.geojson", function( data ) {
-    var dataset = data;
-    // draw the dataset on the map
-    plotDataset(dataset);
-    //create the sidebar with links to fire polygons on the map
-    createListForClick(dataset);
-});
-
-// function to plot the dataset passed to it
-function plotDataset(dataset) {
-    acsGeoJSON = L.geoJson(dataset, {
-        style: acsStyle,
-        onEachFeature: acsOnEachFeature
-    }).addTo(map);
-
-    // create layer controls
-    createLayerControls(); 
-}
-
-// function that sets the style of the geojson layer
-var acsStyle = function (feature, latlng) {
-
-    var calc = calculatePercentage(feature);
-
-    var style = {
-        weight: 1,
-        opacity: .25,
-        color: 'grey',
-        fillOpacity: fillOpacity(calc[2]),
-        fillColor: fillColorPercentage(calc[2])
-    };
-
-    return style;
-
-}
-
-function calculatePercentage(feature) {
-    var output = [];
-    var numerator = parseFloat(feature.properties.ACS_13_5YR_B07201_HD01_VD14);
-    var denominator = parseFloat(feature.properties.ACS_13_5YR_B07201_HD01_VD01);
-    var percentage = ((numerator/denominator) * 100).toFixed(0);
-    output.push(numerator);
-    output.push(denominator);
-    output.push(percentage);
-    return output;    
-}
-
-// function that fills polygons with color based on the data
-function fillColorPercentage(d) {
-    return d > 9 ? '#006d2c' :
-           d > 7 ? '#31a354' :
-           d > 5 ? '#74c476' :
-           d > 3 ? '#a1d99b' :
-           d > 1 ? '#c7e9c0' :
-                   '#edf8e9';
-}
-
-// function that sets the fillOpacity of layers -- if % is 0 then make polygons transparent
-function fillOpacity(d) {
-    return d == 0 ? 0.0 :
-                    0.75;
-}
-
-// empty L.popup so we can fire it outside of the map
-var popup = new L.Popup();
-
-// set up a counter so we can assign an ID to each layer
-var count = 0;
-
-// on each feature function that loops through the dataset, binds popups, and creates a count
-var acsOnEachFeature = function(feature,layer){
-    var calc = calculatePercentage(feature);
-
-    // let's bind some feature properties to a pop up with an .on("click", ...) command. We do this so we can fire it both on and off the map
-    layer.on("click", function (e) {
-        var bounds = layer.getBounds();
-        var popupContent = "<strong>Total Population:</strong> " + calc[1] + "<br /><strong>Population Moved to US in Last Year:</strong> " + calc[0] + "<br /><strong>Percentage Moved to US in Last Year:</strong> " + calc[2] + "%";
-        popup.setLatLng(bounds.getCenter());
-        popup.setContent(popupContent);
-        map.openPopup(popup);
-    });
-
-    // we'll now add an ID to each layer so we can fire the popup outside of the map
-    layer._leaflet_id = 'acsLayerID' + count;
-    count++;
-
-}
-
-
-function createLayerControls(){
-    // add in layer controls
-    var baseMaps = {
-        "CartoDB Basemap": CartoDBTiles,
-    };
-
-    var overlayMaps = {
-        "Percentage Moved to US in Last Year": acsGeoJSON,
-    };
-
-    // add control
-    L.control.layers(baseMaps, overlayMaps).addTo(map);
-    
-}
-
-
 
 
 // add in a legend to make sense of it all
@@ -132,14 +22,15 @@ legend.onAdd = function (map) {
 
     // a method in Leaflet for creating new divs and setting classes
     var div = L.DomUtil.create('div', 'legend'),
-        amounts = [0, 1, 3, 5, 7, 9];
 
-        div.innerHTML += '<p>Percentage Population<br />That Moved to US in<br />the Last Year</p>';
+        conditions = ['Excellent', 'Good', 'Fair', 'Poor', 'Dead', 'Stump', 'Unknown'];
 
-        for (var i = 0; i < amounts.length; i++) {
+        div.innerHTML += '<p><strong> Tree Health </strong></p>';
+
+        for (var i = 0; i < conditions.length; i++) {
             div.innerHTML +=
-                '<i style="background:' + fillColorPercentage(amounts[i] + 1) + '"></i> ' +
-                amounts[i] + (amounts[i + 1] ? '% &ndash;' + amounts[i + 1] + '%<br />' : '% +<br />');
+                '<i style="background:' + fillColorCondition(conditions[i]) + '"></i> ' +
+                conditions[i] + (conditions[i + 1] ? '<br />' : '<br />');
         }
 
     return div;
@@ -166,7 +57,7 @@ function createListForClick(dataset) {
         .enter()
         .append("li")
         .html(function(d) { 
-            return '<a href="#">' + d.properties.ACS_13_5YR_B07201_GEOdisplay_label + '</a>'; 
+            return '<a href="#">' + d.properties.ACS_13_5YR_B07201_HD02_VD01 + '</a>'; 
         })
         .on('click', function(d, i) {
             console.log(d.properties.ACS_13_5YR_B07201_HD02_VD01);
@@ -178,11 +69,12 @@ function createListForClick(dataset) {
 
 }
 
-
 // lets add data from the API now
 // set a global variable to use in the D3 scale below
 // use jQuery geoJSON to grab data from API
-$.getJSON( "https://data.cityofnewyork.us/resource/erm2-nwe9.json?$$app_token=rQIMJbYqnCnhVM9XNPHE9tj0g&borough=BROOKLYN&complaint_type=Noise&status=Open", function( data ) {
+// select all Quercus rubra in the bronx
+$.getJSON( "https://data.cityofnewyork.us/resource/kyad-zm4j.json?$$app_token=rQIMJbYqnCnhVM9XNPHE9tj0g&borough=Bronx&species=QURU"
+, function( data ) {
     var dataset = data;
     // draw the dataset on the map
     plotAPIData(dataset);
@@ -195,7 +87,7 @@ var apiLayerGroup = L.layerGroup();
 // since these data are not geoJson, we have to build our dots from the data by hand
 function plotAPIData(dataset) {
     // set up D3 ordinal scle for coloring the dots just once
-    var ordinalScale = setUpD3Scale(dataset);
+    var radiusScale = setUpD3Scale(dataset);
     //console.log(ordinalScale("Noise, Barking Dog (NR5)"));
 
 
@@ -203,19 +95,28 @@ function plotAPIData(dataset) {
     $.each(dataset, function( index, value ) {
 
         // check to see if lat or lon is undefined or null
+        // console.log(value.latitude, value.longitude)
         if ((typeof value.latitude !== "undefined" || typeof value.longitude !== "undefined") || (value.latitude && value.longitude)) {
             // create a leaflet lat lon object to use in L.circleMarker
             var latlng = L.latLng(value.latitude, value.longitude);
      
             var apiMarker = L.circleMarker(latlng, {
                 stroke: false,
-                fillColor: ordinalScale(value.descriptor),
-                fillOpacity: 1,
-                radius: 5
+                fillColor: fillColorCondition(value.condition),
+                fillOpacity: fillOpacityCondition(value.condition),
+                radius: radiusScale(value.diameter) * 2
             });
 
+            // var popupContent = "<strong>Species:</strong> " + calc[1] + "<br /><strong>Population Moved to US in Last Year:</strong> " + calc[0] + "<br /><strong>Percentage Moved to US in Last Year:</strong> " + calc[2] + "%";
+            //         popup.setLatLng(bounds.getCenter());
+
+
+
             // bind a simple popup so we know what the noise complaint is
-            apiMarker.bindPopup(value.descriptor);
+            apiMarker.bindPopup("<strong>Species: </strong>" + value.spc_latin + 
+                "<br /><strong>Diameter: </strong>" + value.diameter + " in" +
+                "<br /><strong>Condition: </strong>" + value.condition) + 
+                toString(latlng);
 
             // add dots to the layer group
             apiLayerGroup.addLayer(apiMarker);
@@ -223,6 +124,8 @@ function plotAPIData(dataset) {
         }
 
     });
+
+
 
     apiLayerGroup.addTo(map);
 
@@ -232,29 +135,43 @@ function setUpD3Scale(dataset) {
     //console.log(dataset);
     // create unique list of descriptors
     // first we need to create an array of descriptors
-    var descriptors = [];
+    var diameters = [];
 
     // loop through descriptors and add to descriptor array
     $.each(dataset, function( index, value ) {
-        descriptors.push(value.descriptor);
+        diameters.push(value.diameter);
     });
 
     // use underscore to create a unique array
-    var descriptorsUnique = _.uniq(descriptors);
+    var diametersUnique = _.uniq(diameters);
 
     // create a D3 ordinal scale based on that unique array as a domain
-    var ordinalScale = d3.scale.category20()
-        .domain(descriptorsUnique);
+    var linearScale = d3.scale.quantile()
+        .domain(diametersUnique)
+        .range([1, 2, 3, 4]);
 
-    return ordinalScale;
+    console.log(diametersUnique)
+    console.log(linearScale)
+    return linearScale;
 
+}
+
+function fillColorCondition(d) {
+    health_colors = ['#d7191c','#fdae61','#ffffbf','#a6d96a','#1a9641']
+    return d == 'Excellent' ? health_colors[4] :
+           d == 'Good'      ? health_colors[3] :
+           d == 'Fair'      ? health_colors[2] :
+           d == 'Poor'      ? health_colors[1] :
+           d == 'Dead'      ? health_colors[0] :
+           d == 'Stump'     ? health_colors[0] :
+                              '#80cdc1';
 }
 
 
 
-
-
-
-
+function fillOpacityCondition(d) {
+    return d == 'Unknown' ? 0.25 :
+                    0.75;
+}
 
 
