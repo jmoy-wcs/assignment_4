@@ -41,34 +41,6 @@ legend.onAdd = function (map) {
 legend.addTo(map);
 
 
-
-// function to create a list in the right hand column with links that will launch the pop-ups on the map
-function createListForClick(dataset) {
-    // use d3 to select the div and then iterate over the dataset appending a list element with a link for clicking and firing
-    // first we'll create an unordered list ul elelemnt inside the <div id='list'></div>. The result will be <div id='list'><ul></ul></div>
-    var ULs = d3.select("#list")
-                .append("ul");
-
-
-    // now that we have a selection and something appended to the selection, let's create all of the list elements (li) with the dataset we have 
-    
-    ULs.selectAll("li")
-        .data(dataset.features)
-        .enter()
-        .append("li")
-        .html(function(d) { 
-            return '<a href="#">' + d.properties.ACS_13_5YR_B07201_HD02_VD01 + '</a>'; 
-        })
-        .on('click', function(d, i) {
-            console.log(d.properties.ACS_13_5YR_B07201_HD02_VD01);
-            console.log(i);
-            var leafletId = 'acsLayerID' + i;
-            map._layers[leafletId].fire('click');
-        });
-
-
-}
-
 // lets add data from the API now
 // set a global variable to use in the D3 scale below
 // use jQuery geoJSON to grab data from API
