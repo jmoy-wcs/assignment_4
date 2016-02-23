@@ -83,12 +83,12 @@ function plotAPIData(dataset) {
             //         popup.setLatLng(bounds.getCenter());
 
 
+            var condtion_text = "<font color=" + fillColorCondition(value.condition) + ">" + value.condition + "</font>"
 
             // bind a simple popup so we know what the noise complaint is
             apiMarker.bindPopup("<strong>Species: </strong>" + value.spc_latin + 
                 "<br /><strong>Diameter: </strong>" + value.diameter + " in" +
-                "<br /><strong>Condition: </strong>" + value.condition) + 
-                toString(latlng);
+                "<br /><strong>Condition: </strong>" + condtion_text);
 
             // add dots to the layer group
             apiLayerGroup.addLayer(apiMarker);
